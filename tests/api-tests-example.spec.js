@@ -4,7 +4,7 @@ const { test, expect } = require('@playwright/test');
 const REPO = 'playwright-api-tests-example';
 const USER = 'ViacheslavBulba';
 
-const dateAndTime = new Date().toLocaleString();
+// https://github.com/ViacheslavBulba/playwright-api-tests-example/issues
 
 // test.beforeAll(async ({ request }) => {
 //   // Create a new repository
@@ -34,53 +34,44 @@ const dateAndTime = new Date().toLocaleString();
 // });
 
 test('create issue in repo and get it by id number', async ({ request }) => {
-
+  const dateAndTime = new Date().toLocaleString();
   const issueTitle = '[Bug] report - ' + dateAndTime;
   const issueDescription = 'Bug description';
 
-  const newIssue = await request.post(`/repos/${USER}/${REPO}/issues`, {
+  const body = {
     data: {
       title: issueTitle,
       body: issueDescription,
     }
-  });
-  console.log(await newIssue.json());
-  expect(newIssue.ok()).toBeTruthy();
+  }
 
-  const issues = await request.get(`/repos/${USER}/${REPO}/issues`);
-  expect(issues.ok()).toBeTruthy();
-  expect(await issues.json()).toContainEqual(expect.objectContaining({
-    title: issueTitle,
-    body: issueDescription
-  }));
+  console.log(`send post request to create new issue`);
+  const postRequestCreateIssue = await request.post(`/repos/${USER}/${REPO}/issues`, body);
+  // console.log(await postRequestCreateIssue.json());
+  console.log(`verify response code = ok`);
+  expect(postRequestCreateIssue.ok()).toBeTruthy();
 
-  const response = await newIssue.json();
+  console.log(`send get request to receive all issues`);
+  const getRequestGetAllIssues = await request.get(`/repos/${USER}/${REPO}/issues`);
+  console.log(`verify response code = ok`);
+  expect(getRequestGetAllIssues.ok()).toBeTruthy();
+  console.log(`verify that newly created issue is present in all issues response`);
+  expect(await getRequestGetAllIssues.json()).toContainEqual(expect.objectContaining(body.data));
+
+  const response = await postRequestCreateIssue.json();
   const issueNumber = response.number;
-  const getIssueByNumber = await request.get(`/repos/${USER}/${REPO}/issues/${issueNumber}`);
-  console.log(await getIssueByNumber.json());
-  expect(getIssueByNumber.ok()).toBeTruthy();
-  const responseGetIssueByNumber = await getIssueByNumber.json();
+  console.log(`send get request to receive issue number ${issueNumber}`);
+  const getRequestGetIssueByNumber = await request.get(`/repos/${USER}/${REPO}/issues/${issueNumber}`);
+  // console.log(await getRequestGetIssueByNumber.json());
+  console.log(`verify response code = ok`);
+  expect(getRequestGetIssueByNumber.ok()).toBeTruthy();
+  const responseGetIssueByNumber = await getRequestGetIssueByNumber.json();
   console.log(`verify that 'number' field in response = ${issueNumber}`);
   expect(responseGetIssueByNumber.number).toBe(issueNumber);
   console.log(`verify that 'title' field in response = ${issueTitle}`);
   expect(responseGetIssueByNumber.title).toBe(issueTitle);
   console.log(`verify that 'body' field in response = ${issueDescription}`);
   expect(responseGetIssueByNumber.body).toBe(issueDescription);
-});
 
-test('should create a feature request', async ({ request }) => {
-  const newIssue = await request.post(`/repos/${USER}/${REPO}/issues`, {
-    data: {
-      title: '[Feature] request - ' + dateAndTime,
-      body: 'Feature description',
-    }
-  });
-  expect(newIssue.ok()).toBeTruthy();
-
-  const issues = await request.get(`/repos/${USER}/${REPO}/issues`);
-  expect(issues.ok()).toBeTruthy();
-  expect(await issues.json()).toContainEqual(expect.objectContaining({
-    title: '[Feature] request - ' + dateAndTime,
-    body: 'Feature description'
-  }));
+  console.log('see created issues on Web UI here - https://github.com/ViacheslavBulba/playwright-api-tests-example/issues');
 });
