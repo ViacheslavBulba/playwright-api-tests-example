@@ -17,9 +17,20 @@ const dateAndTime = new Date().toLocaleString();
 // });
 
 // test.afterAll(async ({ request }) => {
-//   // Delete the repository
-//   const response = await request.delete(`/repos/${USER}/${REPO}`);
-//   expect(response.ok()).toBeTruthy();
+//   // Delete all existing issues as cleanup - NO DELETE API ON GITHUB FOR ISSUES
+//   const issuesResponse = await request.get(`/repos/${USER}/${REPO}/issues`);
+//   expect(issuesResponse.ok()).toBeTruthy();
+//   const issues = await issuesResponse.json();
+//   console.log(issues);
+//   for (const issue of issues) {
+//     const response = await request.delete(`/repos/${USER}/${REPO}/issues/${issue.number}`);
+//     console.log(await response.json());
+//     expect(response.ok()).toBeTruthy();
+//   }
+
+//   // // Delete the repository
+//   // const response = await request.delete(`/repos/${USER}/${REPO}`);
+//   // expect(response.ok()).toBeTruthy();
 // });
 
 test('create issue in repo and get it by id number', async ({ request }) => {
