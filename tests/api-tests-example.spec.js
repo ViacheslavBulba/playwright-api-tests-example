@@ -22,11 +22,15 @@ const dateAndTime = new Date().toLocaleString();
 //   expect(response.ok()).toBeTruthy();
 // });
 
-test('should create a bug report', async ({ request }) => {
+test('create issue in repo and get it by id number', async ({ request }) => {
+
+  const issueTitle = '[Bug] report - ' + dateAndTime;
+  const issueDescription = 'Bug description';
+
   const newIssue = await request.post(`/repos/${USER}/${REPO}/issues`, {
     data: {
-      title: '[Bug] report - ' + dateAndTime,
-      body: 'Bug description',
+      title: issueTitle,
+      body: issueDescription,
     }
   });
   console.log(await newIssue.json());
@@ -35,9 +39,22 @@ test('should create a bug report', async ({ request }) => {
   const issues = await request.get(`/repos/${USER}/${REPO}/issues`);
   expect(issues.ok()).toBeTruthy();
   expect(await issues.json()).toContainEqual(expect.objectContaining({
-    title: '[Bug] report - ' + dateAndTime,
-    body: 'Bug description'
+    title: issueTitle,
+    body: issueDescription
   }));
+
+  const response = await newIssue.json();
+  const issueNumber = response.number;
+  const getIssueByNumber = await request.get(`/repos/${USER}/${REPO}/issues/${issueNumber}`);
+  console.log(await getIssueByNumber.json());
+  expect(getIssueByNumber.ok()).toBeTruthy();
+  const responseGetIssueByNumber = await getIssueByNumber.json();
+  console.log(`verify that 'number' field in response = ${issueNumber}`);
+  expect(responseGetIssueByNumber.number).toBe(issueNumber);
+  console.log(`verify that 'title' field in response = ${issueTitle}`);
+  expect(responseGetIssueByNumber.title).toBe(issueTitle);
+  console.log(`verify that 'body' field in response = ${issueDescription}`);
+  expect(responseGetIssueByNumber.body).toBe(issueDescription);
 });
 
 test('should create a feature request', async ({ request }) => {
