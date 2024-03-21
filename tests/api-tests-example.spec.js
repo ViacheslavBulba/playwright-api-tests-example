@@ -276,3 +276,41 @@ test('POST with headers - github - create issue in repo and get it by id number'
 //   // const response = await request.delete(`/repos/${USER}/${REPO}`);
 //   // expect(response.ok()).toBeTruthy();
 // });
+
+test('GET rooms', async ({ request }) => {
+  const baseURL = 'https://automationintesting.online/room/';
+  const response = await request.get(`${baseURL}`);
+
+  let responseBody = await response.json();
+  console.log(responseBody);
+
+  expect(response.ok()).toBeTruthy();
+  expect(response.status()).toBe(200);
+
+  expect(responseBody).toHaveProperty("rooms");
+  expect(responseBody.rooms[0].roomid).toBeGreaterThan(0);
+});
+
+// curl -H "Content-Type: application/json" -X POST -d '{"username":"admin","password":"password"}' https://automationintesting.online/auth/login
+
+test('POST to get token', async ({ request }) => {
+  const baseURL = 'https://automationintesting.online/auth/login';
+  let token = '';
+  const response = await request.post(`${baseURL}`, {
+    data: {
+      "username": "admin",
+      "password": "password"
+    }
+  });
+  expect(response.ok()).toBeTruthy();
+  expect(response.status()).toBe(200);
+
+  if (response.headers()['content-length'] === '0') {
+    console.log('RESPONSE BODY IS EMPTY, NO JSON RETURNED');
+  } else {
+    console.log(await response.json());
+    const responseBody = await response.json();
+    token = responseBody.token;
+    console.log("token: " + token);
+  }
+});
