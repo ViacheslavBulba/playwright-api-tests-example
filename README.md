@@ -16,9 +16,9 @@ In a REST environment, CRUD operations correspond to the following HTTP methods:
 
 # Install dependencies
 
-cd PROJECT_FOLDER
+`cd PROJECT_FOLDER`
 
-npm install
+`npm install`
 
 # Run tests
 
