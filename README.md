@@ -22,9 +22,11 @@ npm install
 
 # Run tests
 
-npx playwright test tests/api-tests-example.spec.js
+`npx playwright test tests/api-tests-example.spec.js`
 
-npx playwright test -g "POST - create a booking"
+or, to run an individual test
+
+`npx playwright test -g "POST - create a booking"`
 
 # Log example
 
