@@ -3,17 +3,9 @@ const { test, expect } = require('@playwright/test');
 import { faker } from '@faker-js/faker';
 const { DateTime } = require("luxon");
 
-/**
- * @param {number | undefined} ms
- */
-async function delay(ms) {
-  if (ms !== undefined) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-}
+const baseURL = 'https://restful-booker.herokuapp.com';
 
 test('POST - get auth token', async ({ request }) => {
-  const baseURL = 'https://restful-booker.herokuapp.com';
   let token = '';
   const response = await request.post(`${baseURL}/auth`, {
     data: {
@@ -34,7 +26,6 @@ test('POST - get auth token', async ({ request }) => {
 });
 
 test('POST - create a booking', async ({ request }) => {
-  const baseURL = 'https://restful-booker.herokuapp.com';
   const randomFirstName = faker.person.firstName();
   const randomLastName = faker.person.lastName();
   const randomTotalPrice = faker.number.int(999);
@@ -92,15 +83,17 @@ test('POST - create a booking', async ({ request }) => {
 });
 
 test('GET - booking id list', async ({ request }) => {
-  const baseURL = 'https://restful-booker.herokuapp.com';
   const response = await request.get(`${baseURL}/booking`);
-  console.log(await response.json());
+  let responseBody = await response.json();
+  console.log(responseBody);
   expect(response.ok()).toBeTruthy();
   expect(response.status()).toBe(200);
+  console.log(`verify that an array is returned and the first object has property "bookingid"`)
+  expect(responseBody[0]).toHaveProperty("bookingid");
+  expect(responseBody[0].bookingid).toBeGreaterThan(0);
 });
 
 test('GET with parameters', async ({ request }) => {
-  const baseURL = 'https://restful-booker.herokuapp.com';
   const response = await request.get(`${baseURL}/booking`, {
     params: {
       firstname: "Susan",
@@ -113,7 +106,6 @@ test('GET with parameters', async ({ request }) => {
 });
 
 test('PUT with headers and auth token in cookie', async ({ request }) => {
-  const baseURL = 'https://restful-booker.herokuapp.com';
   let token = '';
   // get auth token which will be used in PUT request
   const response = await request.post(`${baseURL}/auth`, {
@@ -158,7 +150,6 @@ test('PUT with headers and auth token in cookie', async ({ request }) => {
 });
 
 test('PATCH - Updating a resource partially', async ({ request }) => {
-  const baseURL = 'https://restful-booker.herokuapp.com';
   let token = '';
   // get auth token which will be used in PATCH request
   const response = await request.post(`${baseURL}/auth`, {
@@ -198,7 +189,6 @@ test('PATCH - Updating a resource partially', async ({ request }) => {
 });
 
 test('DELETE', async ({ request }) => {
-  const baseURL = 'https://restful-booker.herokuapp.com';
   let token = '';
   // get auth token which will be used in DELETE request
   const response = await request.post(`${baseURL}/auth`, {
@@ -231,59 +221,61 @@ test('DELETE', async ({ request }) => {
   expect(deleteRequest.statusText()).toBe('Created');
 });
 
-// GITHUB API EXAMPLE BELOW - ADD githubAuthToken FIRST
 
-const REPO = 'playwright-api-tests-example';
-const USER = 'ViacheslavBulba';
 
-test('POST with headers - github - create issue in repo and get it by id number', async ({ request }) => {
-  const baseURL = 'https://api.github.com';
-  const githubAuthToken = '';
-  if (githubAuthToken === '') {
-    console.log('PUT IN YOUR GITHUB ACCESS TOKEN');
-    test.skip();
-  }
-  const dateAndTime = new Date().toLocaleString();
-  const issueTitle = '[Bug] report - ' + dateAndTime;
-  const issueDescription = 'Bug description';
-  const headers = {
-    "Authorization": `token ${githubAuthToken}`,
-    "Accept": "application/vnd.github.v3+json",
-  }
-  const body = {
-    data: {
-      title: issueTitle,
-      body: issueDescription,
-    },
-    headers
-  };
-  console.log(`send post request to create new issue`);
-  const postRequestCreateIssue = await request.post(`${baseURL}/repos/${USER}/${REPO}/issues`, body);
-  console.log(await postRequestCreateIssue.json());
-  console.log(`verify response code = ok`);
-  expect(postRequestCreateIssue.ok()).toBeTruthy();
-  console.log(`send get request to receive all issues`);
-  const getRequestGetAllIssues = await request.get(`${baseURL}/repos/${USER}/${REPO}/issues`);
-  console.log(`verify response code = ok`);
-  expect(getRequestGetAllIssues.ok()).toBeTruthy();
-  console.log(`verify that newly created issue is present in all issues response`);
-  expect(await getRequestGetAllIssues.json()).toContainEqual(expect.objectContaining(body.data));
-  const response = await postRequestCreateIssue.json();
-  const issueNumber = response.number;
-  console.log(`send get request to receive issue number ${issueNumber}`);
-  const getRequestGetIssueByNumber = await request.get(`${baseURL}/repos/${USER}/${REPO}/issues/${issueNumber}`);
-  console.log(await getRequestGetIssueByNumber.json());
-  console.log(`verify response code = ok`);
-  expect(getRequestGetIssueByNumber.ok()).toBeTruthy();
-  const responseGetIssueByNumber = await getRequestGetIssueByNumber.json();
-  console.log(`verify that 'number' field in response = ${issueNumber}`);
-  expect(responseGetIssueByNumber.number).toBe(issueNumber);
-  console.log(`verify that 'title' field in response = ${issueTitle}`);
-  expect(responseGetIssueByNumber.title).toBe(issueTitle);
-  console.log(`verify that 'body' field in response = ${issueDescription}`);
-  expect(responseGetIssueByNumber.body).toBe(issueDescription);
-  console.log('see created issues on Web UI here - https://github.com/ViacheslavBulba/playwright-api-tests-example/issues');
-});
+// // GITHUB API EXAMPLE BELOW - ADD githubAuthToken FIRST
+
+// const REPO = 'playwright-api-tests-example';
+// const USER = 'ViacheslavBulba';
+
+// test('POST with headers - github - create issue in repo and get it by id number', async ({ request }) => {
+//   const baseURL = 'https://api.github.com';
+//   const githubAuthToken = '';
+//   if (githubAuthToken === '') {
+//     console.log('PUT IN YOUR GITHUB ACCESS TOKEN');
+//     test.skip();
+//   }
+//   const dateAndTime = new Date().toLocaleString();
+//   const issueTitle = '[Bug] report - ' + dateAndTime;
+//   const issueDescription = 'Bug description';
+//   const headers = {
+//     "Authorization": `token ${githubAuthToken}`,
+//     "Accept": "application/vnd.github.v3+json",
+//   }
+//   const body = {
+//     data: {
+//       title: issueTitle,
+//       body: issueDescription,
+//     },
+//     headers
+//   };
+//   console.log(`send post request to create new issue`);
+//   const postRequestCreateIssue = await request.post(`${baseURL}/repos/${USER}/${REPO}/issues`, body);
+//   console.log(await postRequestCreateIssue.json());
+//   console.log(`verify response code = ok`);
+//   expect(postRequestCreateIssue.ok()).toBeTruthy();
+//   console.log(`send get request to receive all issues`);
+//   const getRequestGetAllIssues = await request.get(`${baseURL}/repos/${USER}/${REPO}/issues`);
+//   console.log(`verify response code = ok`);
+//   expect(getRequestGetAllIssues.ok()).toBeTruthy();
+//   console.log(`verify that newly created issue is present in all issues response`);
+//   expect(await getRequestGetAllIssues.json()).toContainEqual(expect.objectContaining(body.data));
+//   const response = await postRequestCreateIssue.json();
+//   const issueNumber = response.number;
+//   console.log(`send get request to receive issue number ${issueNumber}`);
+//   const getRequestGetIssueByNumber = await request.get(`${baseURL}/repos/${USER}/${REPO}/issues/${issueNumber}`);
+//   console.log(await getRequestGetIssueByNumber.json());
+//   console.log(`verify response code = ok`);
+//   expect(getRequestGetIssueByNumber.ok()).toBeTruthy();
+//   const responseGetIssueByNumber = await getRequestGetIssueByNumber.json();
+//   console.log(`verify that 'number' field in response = ${issueNumber}`);
+//   expect(responseGetIssueByNumber.number).toBe(issueNumber);
+//   console.log(`verify that 'title' field in response = ${issueTitle}`);
+//   expect(responseGetIssueByNumber.title).toBe(issueTitle);
+//   console.log(`verify that 'body' field in response = ${issueDescription}`);
+//   expect(responseGetIssueByNumber.body).toBe(issueDescription);
+//   console.log('see created issues on Web UI here - https://github.com/ViacheslavBulba/playwright-api-tests-example/issues');
+// });
 
 // https://github.com/ViacheslavBulba/playwright-api-tests-example/issues
 
@@ -314,16 +306,11 @@ test('POST with headers - github - create issue in repo and get it by id number'
 //   // expect(response.ok()).toBeTruthy();
 // });
 
-test('GET rooms', async ({ request }) => {
-  const baseURL = 'https://automationintesting.online/room/';
-  const response = await request.get(`${baseURL}`);
-
-  let responseBody = await response.json();
-  console.log(responseBody);
-
-  expect(response.ok()).toBeTruthy();
-  expect(response.status()).toBe(200);
-
-  expect(responseBody).toHaveProperty("rooms");
-  expect(responseBody.rooms[0].roomid).toBeGreaterThan(0);
-});
+/**
+ * @param {number | undefined} ms
+ */
+async function delay(ms) {
+  if (ms !== undefined) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
