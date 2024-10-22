@@ -3,6 +3,36 @@ const { test, expect } = require('@playwright/test');
 import { faker } from '@faker-js/faker';
 const { DateTime } = require("luxon");
 
+/**
+ * @param {number | undefined} ms
+ */
+async function delay(ms) {
+  if (ms !== undefined) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+}
+
+test('POST - get auth token', async ({ request }) => {
+  const baseURL = 'https://restful-booker.herokuapp.com';
+  let token = '';
+  const response = await request.post(`${baseURL}/auth`, {
+    data: {
+      "username": "admin",
+      "password": "password123"
+    }
+  });
+  expect(response.ok()).toBeTruthy();
+  expect(response.status()).toBe(200);
+  if (response.headers()['content-length'] === '0') {
+    console.log('response body is empty, no json returned');
+  } else {
+    console.log(await response.json());
+    const responseBody = await response.json();
+    token = responseBody.token;
+    console.log("token: " + token);
+  }
+});
+
 test('POST - create a booking', async ({ request }) => {
   const baseURL = 'https://restful-booker.herokuapp.com';
   const randomFirstName = faker.person.firstName();
@@ -61,7 +91,7 @@ test('POST - create a booking', async ({ request }) => {
   expect(responseBody).toHaveProperty("additionalneeds", randomNeeds);
 });
 
-test('GET - get booking id list', async ({ request }) => {
+test('GET - booking id list', async ({ request }) => {
   const baseURL = 'https://restful-booker.herokuapp.com';
   const response = await request.get(`${baseURL}/booking`);
   console.log(await response.json());
@@ -183,13 +213,20 @@ test('DELETE', async ({ request }) => {
   const responseBody = await response.json();
   token = responseBody.token;
   console.log("token: " + token);
+  // get first available id for deletion
+  const getBookingsResponse = await request.get(`${baseURL}/booking`);
+  console.log(await getBookingsResponse.json());
+  let bookingsResponseBody = await getBookingsResponse.json();
+  const bookingId = bookingsResponseBody[0].bookingid;
+  console.log("bookingId for deletion: " + bookingId);
   // DELETE
-  const deleteRequest = await request.delete(`${baseURL}/booking/1`, {
+  const deleteRequest = await request.delete(`${baseURL}/booking/${bookingId}`, {
     headers: {
       'Content-Type': 'application/json',
       'Cookie': `token=${token}`
     }
   });
+  console.log(await deleteRequest.text());
   expect(deleteRequest.status()).toEqual(201);
   expect(deleteRequest.statusText()).toBe('Created');
 });
@@ -204,7 +241,7 @@ test('POST with headers - github - create issue in repo and get it by id number'
   const githubAuthToken = '';
   if (githubAuthToken === '') {
     console.log('PUT IN YOUR GITHUB ACCESS TOKEN');
-    return;
+    test.skip();
   }
   const dateAndTime = new Date().toLocaleString();
   const issueTitle = '[Bug] report - ' + dateAndTime;
@@ -289,28 +326,4 @@ test('GET rooms', async ({ request }) => {
 
   expect(responseBody).toHaveProperty("rooms");
   expect(responseBody.rooms[0].roomid).toBeGreaterThan(0);
-});
-
-// curl -H "Content-Type: application/json" -X POST -d '{"username":"admin","password":"password"}' https://automationintesting.online/auth/login
-
-test('POST to get token', async ({ request }) => {
-  const baseURL = 'https://automationintesting.online/auth/login';
-  let token = '';
-  const response = await request.post(`${baseURL}`, {
-    data: {
-      "username": "admin",
-      "password": "password"
-    }
-  });
-  expect(response.ok()).toBeTruthy();
-  expect(response.status()).toBe(200);
-
-  if (response.headers()['content-length'] === '0') {
-    console.log('RESPONSE BODY IS EMPTY, NO JSON RETURNED');
-  } else {
-    console.log(await response.json());
-    const responseBody = await response.json();
-    token = responseBody.token;
-    console.log("token: " + token);
-  }
 });
