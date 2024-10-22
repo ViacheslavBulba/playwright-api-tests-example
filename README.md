@@ -16,6 +16,10 @@ In a REST environment, CRUD operations correspond to the following HTTP methods:
 
 # Install dependencies
 
+You need to download and install nodeJS first.
+
+Then clone the repo and run in terminal
+
 `cd PROJECT_FOLDER`
 
 `npm install`
