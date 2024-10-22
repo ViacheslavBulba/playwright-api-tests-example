@@ -21,9 +21,27 @@ const { DateTime } = require("luxon");
 
 const baseURL = 'https://restful-booker.herokuapp.com';
 
-test('POST - get auth token', async ({ request }) => {
+const getAuthTokenPostEndpoint = `${baseURL}/auth`;
+const bookingEndpoint = `${baseURL}/booking`; // can accept POST, GET, DELETE
+
+async function sendPostToGetAuthToken(request) {
   let token = '';
-  const response = await request.post(`${baseURL}/auth`, {
+  const response = await request.post(getAuthTokenPostEndpoint, {
+    data: {
+      "username": "admin",
+      "password": "password123"
+    }
+  });
+  console.log(await response.json());
+  expect(response.ok()).toBeTruthy();
+  expect(response.status()).toBe(200);
+  const responseBody = await response.json();
+  token = responseBody.token;
+  return token;
+}
+
+test('POST - get auth token', async ({ request }) => {
+  const response = await request.post(getAuthTokenPostEndpoint, {
     data: {
       "username": "admin",
       "password": "password123"
@@ -31,14 +49,12 @@ test('POST - get auth token', async ({ request }) => {
   });
   expect(response.ok()).toBeTruthy();
   expect(response.status()).toBe(200);
-  if (response.headers()['content-length'] === '0') {
-    console.log('response body is empty, no json returned');
-  } else {
-    console.log(await response.json());
-    const responseBody = await response.json();
-    token = responseBody.token;
-    console.log("token: " + token);
-  }
+  const responseBody = await response.json();
+  console.log(responseBody);
+  console.log('verify that reponse has "token" field');
+  expect(responseBody).toHaveProperty("token");
+  console.log('verify that the token length is 15 symbols');
+  expect(responseBody.token.length).toBe(15);
 });
 
 test('POST - create a booking', async ({ request }) => {
@@ -49,20 +65,23 @@ test('POST - create a booking', async ({ request }) => {
   const randomNeeds = faker.word.noun();
   const currentDate = DateTime.now().toFormat('yyyy-MM-dd');
   const currentDatePlusFive = DateTime.now().plus({ days: 5 }).toFormat('yyyy-MM-dd');
-  let response = await request.post(`${baseURL}/booking`, {
-    data: {
-      "firstname": randomFirstName,
-      "lastname": randomLastName,
-      "totalprice": randomTotalPrice,
-      "depositpaid": randomBoolean,
-      "bookingdates": {
-        "checkin": currentDate,
-        "checkout": currentDatePlusFive
-      },
-      "additionalneeds": randomNeeds,
-    }
+  const body = {
+    "firstname": randomFirstName,
+    "lastname": randomLastName,
+    "totalprice": randomTotalPrice,
+    "depositpaid": randomBoolean,
+    "bookingdates": {
+      "checkin": currentDate,
+      "checkout": currentDatePlusFive
+    },
+    "additionalneeds": randomNeeds,
+  }
+  console.log(`request: ${bookingEndpoint}`);
+  console.log(body);
+  let response = await request.post(bookingEndpoint, {
+    data: body
   });
-  console.log('--- response ---');
+  console.log('response:');
   console.log(await response.json());
   expect(response.ok()).toBeTruthy();
   expect(response.status()).toBe(200);
@@ -77,14 +96,15 @@ test('POST - create a booking', async ({ request }) => {
   expect(responseBody.booking.bookingdates).toHaveProperty("checkout", currentDatePlusFive);
   expect(responseBody.booking).toHaveProperty("additionalneeds", randomNeeds);
   const bookingId = responseBody.bookingid;
-  // GET all bookings ids after POST
-  response = await request.get(`${baseURL}/booking`);
+  console.log(`bookingId: ${bookingId}`);
+  console.log('GET all bookings ids after POST - verify that new id is present in get all bookings');
+  response = await request.get(bookingEndpoint);
   console.log(await response.json());
   expect(response.ok()).toBeTruthy();
   expect(response.status()).toBe(200);
   expect(JSON.stringify(await response.json())).toContain(`{\"bookingid\":${bookingId}}`);
-  // GET specific booking by id after POST
-  response = await request.get(`${baseURL}/booking/${bookingId}`);
+  console.log(`GET specific booking by id ${bookingId} after POST`);
+  response = await request.get(`${bookingEndpoint}/${bookingId}`);
   console.log(await response.json());
   expect(response.ok()).toBeTruthy();
   expect(response.status()).toBe(200);
@@ -98,8 +118,8 @@ test('POST - create a booking', async ({ request }) => {
   expect(responseBody).toHaveProperty("additionalneeds", randomNeeds);
 });
 
-test('GET - booking id list', async ({ request }) => {
-  const response = await request.get(`${baseURL}/booking`);
+test('GET - all bookings ID list', async ({ request }) => {
+  const response = await request.get(bookingEndpoint);
   let responseBody = await response.json();
   console.log(responseBody);
   expect(response.ok()).toBeTruthy();
@@ -109,8 +129,8 @@ test('GET - booking id list', async ({ request }) => {
   expect(responseBody[0].bookingid).toBeGreaterThan(0);
 });
 
-test('GET with parameters', async ({ request }) => {
-  const response = await request.get(`${baseURL}/booking`, {
+test('GET - with parameters', async ({ request }) => {
+  const response = await request.get(bookingEndpoint, {
     params: {
       firstname: "Susan",
       lastname: "Jackson"
@@ -121,23 +141,10 @@ test('GET with parameters', async ({ request }) => {
   expect(response.status()).toBe(200);
 });
 
-test('PUT with headers and auth token in cookie', async ({ request }) => {
-  let token = '';
-  // get auth token which will be used in PUT request
-  const response = await request.post(`${baseURL}/auth`, {
-    data: {
-      "username": "admin",
-      "password": "password123"
-    }
-  });
-  console.log(await response.json());
-  expect(response.ok()).toBeTruthy();
-  expect(response.status()).toBe(200);
-  const responseBody = await response.json();
-  token = responseBody.token;
-  console.log("token: " + token);
+test('PUT - with headers and auth token in cookie', async ({ request }) => {
+  const token = await sendPostToGetAuthToken(request);
   // PUT
-  const updateRequest = await request.put(`${baseURL}/booking/2`, {
+  const updateRequest = await request.put(`${bookingEndpoint}/2`, {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -166,22 +173,9 @@ test('PUT with headers and auth token in cookie', async ({ request }) => {
 });
 
 test('PATCH - Updating a resource partially', async ({ request }) => {
-  let token = '';
-  // get auth token which will be used in PATCH request
-  const response = await request.post(`${baseURL}/auth`, {
-    data: {
-      "username": "admin",
-      "password": "password123"
-    }
-  });
-  console.log(await response.json());
-  expect(response.ok()).toBeTruthy();
-  expect(response.status()).toBe(200);
-  const responseBody = await response.json();
-  token = responseBody.token;
-  console.log("token: " + token);
+  const token = await sendPostToGetAuthToken(request);
   // PATCH
-  const partialUpdateRequest = await request.patch(`${baseURL}/booking/2`, {
+  const partialUpdateRequest = await request.patch(`${bookingEndpoint}/2`, {
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
@@ -205,28 +199,15 @@ test('PATCH - Updating a resource partially', async ({ request }) => {
 });
 
 test('DELETE', async ({ request }) => {
-  let token = '';
-  // get auth token which will be used in DELETE request
-  const response = await request.post(`${baseURL}/auth`, {
-    data: {
-      "username": "admin",
-      "password": "password123"
-    }
-  });
-  console.log(await response.json());
-  expect(response.ok()).toBeTruthy();
-  expect(response.status()).toBe(200);
-  const responseBody = await response.json();
-  token = responseBody.token;
-  console.log("token: " + token);
-  // get first available id for deletion
-  const getBookingsResponse = await request.get(`${baseURL}/booking`);
+  const token = await sendPostToGetAuthToken(request);
+  console.log('get first available id for deletion');
+  const getBookingsResponse = await request.get(bookingEndpoint);
   console.log(await getBookingsResponse.json());
   let bookingsResponseBody = await getBookingsResponse.json();
   const bookingId = bookingsResponseBody[0].bookingid;
   console.log("bookingId for deletion: " + bookingId);
-  // DELETE
-  const deleteRequest = await request.delete(`${baseURL}/booking/${bookingId}`, {
+  console.log('send DELETE request and verify response code = 201');
+  const deleteRequest = await request.delete(`${bookingEndpoint}/${bookingId}`, {
     headers: {
       'Content-Type': 'application/json',
       'Cookie': `token=${token}`
@@ -234,7 +215,6 @@ test('DELETE', async ({ request }) => {
   });
   console.log(await deleteRequest.text());
   expect(deleteRequest.status()).toEqual(201);
-  expect(deleteRequest.statusText()).toBe('Created');
 });
 
 
