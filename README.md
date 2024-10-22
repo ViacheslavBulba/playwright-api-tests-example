@@ -7,7 +7,7 @@ CRUD is an acronym for the four basic operations used to manipulate data:
 - Update: Modifies existing data
 - Delete: Removes existing data
 
-In a REST environment, CRUD operations correspond to the following HTTP methods:
+In a RESTful API environment, CRUD operations correspond to the following HTTP methods:
 
 - POST: Creates a new resource
 - GET: Reads a resource
