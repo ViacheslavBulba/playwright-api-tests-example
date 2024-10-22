@@ -3,6 +3,20 @@ const { test, expect } = require('@playwright/test');
 import { faker } from '@faker-js/faker';
 const { DateTime } = require("luxon");
 
+// CRUD operations
+
+// CRUD is an acronym for the four basic operations used to manipulate data:
+// - Create: Adds new records to the database
+// - Read: Retrieves data from the database
+// - Update: Modifies existing records in the database
+// - Delete: Removes existing records from the database
+
+// In a REST environment, CRUD operations correspond to the following HTTP methods:
+// - POST: Creates a new resource
+// - GET: Reads a resource
+// - PUT: Updates a resource
+// - DELETE: Removes a resource
+
 const baseURL = 'https://restful-booker.herokuapp.com';
 
 test('POST - get auth token', async ({ request }) => {
