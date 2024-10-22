@@ -21,12 +21,12 @@ const { DateTime } = require("luxon");
 
 const baseURL = 'https://restful-booker.herokuapp.com';
 
-const getAuthTokenPostEndpoint = `${baseURL}/auth`;
+const authTokenEndpoint = `${baseURL}/auth`;
 const bookingEndpoint = `${baseURL}/booking`; // can accept POST, GET, DELETE
 
 async function sendPostToGetAuthToken(request) {
   let token = '';
-  const response = await request.post(getAuthTokenPostEndpoint, {
+  const response = await request.post(authTokenEndpoint, {
     data: {
       "username": "admin",
       "password": "password123"
@@ -41,7 +41,7 @@ async function sendPostToGetAuthToken(request) {
 }
 
 test('POST - get auth token', async ({ request }) => {
-  const response = await request.post(getAuthTokenPostEndpoint, {
+  const response = await request.post(authTokenEndpoint, {
     data: {
       "username": "admin",
       "password": "password123"
