@@ -215,6 +215,9 @@ test('DELETE', async ({ request }) => {
   });
   console.log(await deleteRequest.text());
   expect(deleteRequest.status()).toEqual(201);
+  const getRequest = await request.get(`${bookingEndpoint}/${bookingId}`);
+  expect(getRequest.status()).toEqual(404);
+  expect(getRequest.statusText()).toEqual('Not Found');
 });
 
 
