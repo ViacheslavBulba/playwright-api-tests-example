@@ -313,3 +313,21 @@ async function delay(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 }
+
+test('parse get interview example', async ({ request }) => {
+  const response = await request.get('https://jsonmock.hackerrank.com/api/article_users');
+  let responseBody = await response.json();
+  // console.log(responseBody);
+  console.log('response code', response.status());
+  console.log('response status', response.statusText());
+  expect(response.ok()).toBeTruthy();
+  expect(response.status()).toBe(200);
+  // const responseBody = await response.json();
+  // console.log(responseBody.data);
+  const dataArray = responseBody.data;
+  const results = new Map();
+  for (const entry of dataArray) {
+    results.set(entry.username, entry.submission_count);
+  }
+  console.log(results);
+});
